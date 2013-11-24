@@ -6,7 +6,7 @@ import time
 class getTemplate:
     FREQ = 300
     DURATION = 250
-    def getImage(self):
+    def getImage(self, duration):
         vc = cv2.VideoCapture(0)
         if vc.isOpened(): # try to get the first frame
             rval, frame = vc.read()
@@ -18,7 +18,7 @@ class getTemplate:
         board = np.float32([ [w*3/8,h*1/8],[w*3/8,h*7/8],[w*5/8,h*7/8],[w*5/8,h*1/8],\
                 [w*1/8,h*3/8],[w*7/8,h*3/8],[w*1/8,h*5/8],[w*7/8,h*5/8]]).reshape(-1,1,2)    
         start = time.time()
-        while(rval and time.time() - start < 8):
+        while(rval and time.time() - start < duration):
             for i in [0,2,4,6]:
                 #print newBoard[i][0],newBoard[i+1][0]
                 pt1 = tuple(board[i][0])
@@ -39,7 +39,7 @@ class getTemplate:
         vc.release() 
         cv2.imshow('preview', thres)
         key = cv2.waitKey(5)
-        time.sleep(5.5)  
+        time.sleep(duration/2)  
         return frame
         
         

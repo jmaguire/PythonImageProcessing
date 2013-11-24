@@ -2,27 +2,42 @@ import cv2
 import numpy as np
 import getTemplate as gt
 
+## Image/Dectector Class
+class Frame:
+    def __init__(self,image,descriptors,keypoints):
+        self.image = image
+        self.descriptors = descriptors
+        self.keypoints = keypoints
+    def getImage(self):
+        return self.image
+    def getDescriptors(self):
+        return self.descriptors
+    def getKeypoints(self):
+        return self.keypoints
+
+
+## Initialize Surf Detector
 detector = cv2.SURF()
+
+## Get target and extract keypoints/descriptors
 o = gt.getTemplate()
-frame = o.getImage()     
-
-
- 
-template = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-keypointsTarget,descriptorsTarget = detector.detectAndCompute(template,None)   
+frame = o.getImage(4)     
+image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+keypoints,descriptors = detector.detectAndCompute(image,None)   
+target = Frame(image, descriptorsTarget,keypointsTarget)
+print target.getImage() == image,target.getDescriptors() == descriptorsTarget, target.getKeypoints() == keypointsTarget
+##Initialize webcam
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
 rval = False
 while not rval:
     rval, frame = vc.read()
 
-if vc.isOpened(): # try to get the first frame
+if vc.isOpened(): # try to get the first frame should always work!
     rval, frame = vc.read()
 else:
     rval = False 
     
-    cv2.imshow('preview', frame)
-    key = cv2.waitKey(5)
     
 def getMatches(descriptors, descriptorsTarget):
     FLANN_INDEX_KDTREE = 0
@@ -37,14 +52,14 @@ def getMatches(descriptors, descriptorsTarget):
             goodMatches.append(m)
     return goodMatches
 
-h,w = template.shape
 
-##Build stuff
+
+##Build stuff. TEMPORARY. Should extract board from target
+h,w = target.shape
 board = np.float32([ [w*3/8,h*1/8],[w*3/8,h*7/8],[w*5/8,h*7/8],[w*5/8,h*1/8],\
     [w*1/8,h*3/8],[w*7/8,h*3/8],[w*1/8,h*5/8],[w*7/8,h*5/8]]).reshape(-1,1,2)    
-print h,w
 
-print rval
+'''
 while True:
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     keypoints,descriptors = detector.detectAndCompute(im,None)
@@ -78,4 +93,5 @@ while True:
     
     if key == 27: # exit on ESC
         break
+'''
 cv2.destroyWindow("preview")
