@@ -47,14 +47,14 @@ def getMatches(captured, target):
     ## Create Flann Tree
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-    search_params = dict(checks = 75)
+    search_params = dict(checks = 50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
     
     ## Check edge cases
     if (captured.getDescriptors() is None or target.getDescriptors() is None):
         return goodMatches
     
-    if (len(captured.getDescriptors()) == 0 or len(target.getDescriptors()) == 0):
+    if (len(captured.getDescriptors()) <= 4 or len(target.getDescriptors()) <= 0):
         return goodMatches
     
     matches = flann.knnMatch(target.getDescriptors(),captured.getDescriptors(),k=2)
@@ -79,6 +79,12 @@ pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
 ## Homography
 H = None
+norm, oldNorm, oldBoard = None, None, None;
+avergingPeriod = 50
+avgDeltNorm = np.array([-1]*avergingPeriod);
+blocked = False
+counter = 0
+
 
 while True:
     ## Get Matches
@@ -89,8 +95,7 @@ while True:
     matches = getMatches(captured, target)
     
     ## Only update Homography and board if we can see it
-    print leen(matches)
-    if len(matches) > 2:
+    if len(matches) > 4:
         ## Get points, find Homography
         src_pts = np.float32([ target.getKeypoints()[m.queryIdx].pt for m in matches ]).reshape(-1,1,2)
         dst_pts = np.float32([ captured.getKeypoints()[m.trainIdx].pt for m in matches ]).reshape(-1,1,2)
@@ -101,27 +106,49 @@ while True:
         
         ## update board
 
-        
-        
     ## draw board. 
     if H is not None: 
         dst = cv2.perspectiveTransform(pts,H)
+        color = [255,0,0]
         ## Draw tictactoe board
         newBoard = np.int32(cv2.perspectiveTransform(board,H));
+        
+        # if oldBoard != None:
+            # norm = np.sum(np.apply_along_axis(np.linalg.norm,2,newBoard - oldBoard)) 
+        
+        # if oldNorm != None:
+            # ## collect samples of difference in norms
+            # if counter <= avergingPeriod:
+                # avgDeltNorm[counter % len(avgDeltNorm)] = norm-oldNorm
+            # else:
+                # if abs(norm-oldNorm) > np.mean(avgDeltNorm) + .5*np.std(avgDeltNorm):
+                    # print 'yikes',counter
+                    # blocked = True
+                # else:
+                    # blocked = False
+        
+        # if blocked:
+            # print 'here'
+            # color = [0,255,0]
+            # newBoard = oldBoard
+     
         for i in [0,2,4,6]:
             ## end points of lines
             pt1 = tuple(newBoard[i][0])
             pt2 = tuple(newBoard[i+1][0])
-            cv2.line(frame,pt1,pt2,[255,0,0],thickness = 2)
+            cv2.line(frame,pt1,pt2,color,thickness = 2)
         # for m in matches:
             # center = (int(keypoints[m.trainIdx].pt[0]),int(keypoints[m.trainIdx].pt[1]))
             # cv2.circle(frame,center,10,(255,0,0))
         img2 = cv2.polylines(frame,[np.int32(dst)],True,255,3)
-        
+    
+    oldBoard = newBoard
+    oldNorm = norm
+
     cv2.imshow('preview', frame)
     rval, frame = vc.read()
     key = cv2.waitKey(5)
-    
+    counter += 1
     
     if key == 27: # exit on ESC
         break
