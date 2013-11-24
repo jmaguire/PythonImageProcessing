@@ -89,6 +89,7 @@ counter = 0
 while True:
     ## Get Matches
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
     keypoints,descriptors = detector.detectAndCompute(im,None)
     captured = CapturedImage(im, descriptors,keypoints)
     
@@ -147,10 +148,8 @@ while True:
 
     cv2.imshow('preview', frame)
     rval, frame = vc.read()
-    key = cv2.waitKey(5)
     counter += 1
-    
-    if key == 27: # exit on ESC
+    if cv2.waitKey(5) == 27: # exit on ESC
         break
 
 cv2.destroyWindow("preview")
