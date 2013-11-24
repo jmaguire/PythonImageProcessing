@@ -4,19 +4,25 @@ import getTemplate as gt
 
 detector = cv2.SURF()
 o = gt.getTemplate()
-frame = o.getImage()      
+frame = o.getImage()     
+
+
+ 
 template = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 keypointsTarget,descriptorsTarget = detector.detectAndCompute(template,None)   
-   
-
-
 cv2.namedWindow("preview")
 vc = cv2.VideoCapture(0)
+rval = False
+while not rval:
+    rval, frame = vc.read()
 
 if vc.isOpened(): # try to get the first frame
     rval, frame = vc.read()
 else:
     rval = False 
+    
+    cv2.imshow('preview', frame)
+    key = cv2.waitKey(5)
     
 def getMatches(descriptors, descriptorsTarget):
     FLANN_INDEX_KDTREE = 0
@@ -37,20 +43,9 @@ h,w = template.shape
 board = np.float32([ [w*3/8,h*1/8],[w*3/8,h*7/8],[w*5/8,h*7/8],[w*5/8,h*1/8],\
     [w*1/8,h*3/8],[w*7/8,h*3/8],[w*1/8,h*5/8],[w*7/8,h*5/8]]).reshape(-1,1,2)    
 print h,w
-'''
-for i in [0,2,4,6]:
-    #print newBoard[i][0],newBoard[i+1][0]
-    pt1 = tuple(board[i][0])
-    pt2 = tuple(board[i+1][0])
-    
-    #cv2.circle(template,pt1,10,(255,0,0))
-    cv2.line(template,pt1,pt2,[255,0,0],thickness = 2)
-cv2.imshow('preview', template) 
-key = cv2.waitKey(27) 
-o = raw_input('hjello')
-'''    
 
-while rval:
+print rval
+while True:
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     keypoints,descriptors = detector.detectAndCompute(im,None)
     if descriptors is None: continue

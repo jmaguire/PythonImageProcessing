@@ -8,6 +8,11 @@ class getTemplate:
     DURATION = 250
     def getImage(self):
         vc = cv2.VideoCapture(0)
+        if vc.isOpened(): # try to get the first frame
+            rval, frame = vc.read()
+        else:
+            rval = False 
+        print rval
         rval, frame = vc.read()
         h,w,d = frame.shape
         board = np.float32([ [w*3/8,h*1/8],[w*3/8,h*7/8],[w*5/8,h*7/8],[w*5/8,h*1/8],\
@@ -31,7 +36,7 @@ class getTemplate:
         imgSplit = cv2.split(frame)
         gray = cv2.GaussianBlur(gray,(5,5),0)
         thres = cv2.adaptiveThreshold(gray,255,1,1,11,2) 
-        
+        vc.release() 
         cv2.imshow('preview', thres)
         key = cv2.waitKey(5)
         time.sleep(5.5)  
