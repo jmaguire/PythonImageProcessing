@@ -18,17 +18,73 @@ class CapturedImage:
     def getKeypoints(self):
         return self.keypoints
 
-def getCircle(radius,width):
-    degrees = [x for x in xrange(0,360,2)]
 
-    circle = []
-    for degree in degrees:
-        radian = np.pi / 180. * degree
-        for i in range(width): ## 4 wide circle
-            x = (radius-i)*np.cos(radian)
-            y = (radius-i)*np.sin(radian)
-            circle.append([x,y])
-    return np.array(circle);
+## Initialize Surf Detector
+detector = cv2.SURF()
+
+## Get target and extract keypoints/descriptors
+o = gt.getTemplate()
+centroidsTarget, midpointsTarget, frame = o.getImage(1)     
+image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+keypoints,descriptors = detector.detectAndCompute(image,None)   
+target = CapturedImage(image, descriptors,keypoints)
+
+
+##Initialize webcam
+cv2.namedWindow("preview")
+vc = cv2.VideoCapture(0)
+rval = False
+while not rval:
+    rval, frame = vc.read()
+
+if vc.isOpened(): # try to get the first frame should always work!
+    rval, frame = vc.read()
+else:
+    rval = False 
+
+## BOARD AND INITIAL VARIABLES
+##--------------------------------------------------------------
+##Build stuff. TEMPORARY. Should extract board from target
+h,w = target.getImage().shape
+print h,w
+
+xmin = min(centroidsTarget[:,0])
+xmax = max(centroidsTarget[:,0])
+ymin = min(centroidsTarget[:,1])
+ymax = max(centroidsTarget[:,1])
+
+h,w,d = frame.shape
+
+## Doesn't really work because it needs to board to be just tic tac toe,
+## However this doesn't give us enough features
+
+# board = np.float32([ [xmin,h*1/8],[xmin,h*7/8],[xmax,h*7/8],[xmax,h*1/8],\
+        # [w*1/8,ymin],[w*7/8,ymin],[w*1/8,ymax],[w*7/8,ymax]]).reshape(-1,1,2)   
+
+boardX = [w*3/8,w*5/8]
+boardY = [h*3/8,h*5/8]
+board = np.float32([ [boardX[0],h*1/8],[boardX[0],h*7/8],[boardX[1],h*7/8],[boardX[1],h*1/8],\
+    [w*1/8,boardY[0]],[w*7/8,boardY[0]],[w*1/8,boardY[1]],[w*7/8,boardY[1]]]).reshape(-1,1,2)    
+
+## Outline of original image
+pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+
+## Homography
+H = None
+norm, oldNorm, oldBoard = None, None, None;
+avergingPeriod = 50
+avgDeltNorm = np.array([-1]*avergingPeriod);
+blocked = False
+counter = 0
+#--------------------------------------------------------------
+
+    
+    
+    
+    
+
+
+
 
 
     
@@ -88,128 +144,7 @@ def extractQuadrant(frame,quadrant):
         lowerRight = np.array([w*7/8,h*7/8])
         upperLeft = np.array([xmax,ymax]) + PAD
     return frame[upperLeft[0]:lowerRight[0],upperLeft[1]:lowerRight[1]]
-
-def circleAtQuadrant(circle, quadrant,xlims,ylims,w,h):
-    
-    ##ALWAYS USE NP.COPY IF YOU USE THIS TO CALC A NEW CIRCLE
-    newCircle = np.copy(circle)
-    x ,y  = 0 , 0
-    if quadrant == 1:
-        x = xlims[0]/2 + PAD 
-        y = ylims[0]/2
-    if quadrant == 2:
-        x = (xlims[0]+xlims[1])/2
-        y = ylims[0]/2
-    if quadrant == 3:
-        x = (w + xlims[1])/2 - PAD 
-        y = ylims[0]/2
-    if quadrant == 4:
-        x = xlims[0]/2 + PAD  
-        y = (ylims[0]+ylims[1])/2
-    if quadrant == 5:
-        x = (xlims[0]+xlims[1])/2
-        y = (ylims[0]+ylims[1])/2
-    if quadrant == 6:
-        x = (w + xlims[1])/2 - PAD 
-        y = (ylims[0]+ylims[1])/2
-    if quadrant == 7:
-        x = xlims[0]/2 + PAD 
-        y = (ylims[1] + h)/2
-    if quadrant == 8:
-        x = (xlims[0]+xlims[1])/2
-        y = (ylims[1] + h)/2
-    if quadrant == 9:
-        x = (w + xlims[1])/2 - PAD 
-        y = (ylims[1] + h)/2
-    newCircle[:,0] = circle[:,0] + x
-    newCircle[:,1] = newCircle[:,1] + y 
-    return newCircle
-
-
-## Initialize detectors  
-##--------------------------------------------------------------
-##--------------------------------------------------------------
-
-## Initialize Surf Detector
-detector = cv2.SURF()
-
-## Get target and extract keypoints/descriptors
-o = gt.getTemplate()
-centroidsTarget, midpointsTarget, frame = o.getImage(1)     
-image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-keypoints,descriptors = detector.detectAndCompute(image,None)   
-target = CapturedImage(image, descriptors,keypoints)
-
-
-##Initialize webcam
-cv2.namedWindow("preview")
-vc = cv2.VideoCapture(0)
-rval = False
-while not rval:
-    rval, frame = vc.read()
-
-if vc.isOpened(): # try to get the first frame should always work!
-    rval, frame = vc.read()
-else:
-    rval = False 
-##--------------------------------------------------------------
-##--------------------------------------------------------------
-    
-    
-    
-## BOARD AND INITIAL VARIABLES
-##--------------------------------------------------------------
-##--------------------------------------------------------------
-
-# h,w = target.getImage().shape
-
-
-# print h,w
-
-# xmin = min(centroidsTarget[:,0])
-# xmax = max(centroidsTarget[:,0])
-# ymin = min(centroidsTarget[:,1])
-# ymax = max(centroidsTarget[:,1])
-
-# h,w,d = frame.shape
-
-## Doesn't really work because it needs to board to be just tic tac toe,
-## However this doesn't give us enough features
-# board = np.float32([ [xmin,h*1/8],[xmin,h*7/8],[xmax,h*7/8],[xmax,h*1/8],\
-        # [w*1/8,ymin],[w*7/8,ymin],[w*1/8,ymax],[w*7/8,ymax]]).reshape(-1,1,2)   
-
-boardX = [w*3/8,w*5/8]
-boardY = [h*3/8,h*5/8]
-board = np.float32([ [boardX[0],h*1/8],[boardX[0],h*7/8],[boardX[1],h*7/8],[boardX[1],h*1/8],\
-    [w*1/8,boardY[0]],[w*7/8,boardY[0]],[w*1/8,boardY[1]],[w*7/8,boardY[1]]]).reshape(-1,1,2)    
-
-## Outline of original image
-pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-
-## Homography
-H = None
-
-## Statistics to measure blockage
-norm, oldNorm, oldBoard = None, None, None;
-avergingPeriod = 50
-avgDeltNorm = np.array([-1]*avergingPeriod);
-blocked = False
-counter = 0
-
-## Standard Circle 
-radius = (boardY[1] - boardY[0] - 2*PAD)/2
-
-##ALWAYS USE NP.COPY IF YOU USE THIS TO CALC A NEW CIRCLE
-circle = getCircle(radius, 5)
-
-## Pieces
-pieces = [None]*9
-
-## Add two Circles
-pieces[1] = 'O'
-pieces[5] = 'O'
-##--------------------------------------------------------------
-##--------------------------------------------------------------
+ 
 
 while True:
     ## Get Matches
@@ -258,21 +193,7 @@ while True:
             # print 'here'
             # color = [0,255,0]
             # newBoard = oldBoard
-            
-        ## Draw Pieces
-
-        for quadrant, piece in enumerate(pieces):
-            if piece == 'O':
-                print 'here'
-                circleQuad = circleAtQuadrant(circle, quadrant, boardX,boardY,w,h);
-                ## NOTE we have to pack 2D arrays in another array for perpecticeTransform 
-                ## to work
-                circleQuad = np.array([circleQuad])
-                ## Unpack
-                circleQuad = cv2.perspectiveTransform(circleQuad,H)[0];
-                for point in circleQuad.astype(int):
-                    cv2.circle(frame,tuple(point),2,(255,0,0))
-        ## Draw Board Lines          
+     
         for i in [0,2,4,6]:
             ## end points of lines
             pt1 = tuple(newBoard[i][0])

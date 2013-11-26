@@ -37,20 +37,20 @@ class getTemplate:
                 midpointY = int(h/2)
             midpoint = (midpointX,midpointY)
             midpoints.append(midpoint)
-            cv2.circle(frame,midpoint,10,(255,0,0))
+            # cv2.circle(frame,midpoint,10,(255,0,0))
         matrix = np.array(midpoints)
         midpoints = np.int32(midpoints).reshape(-1,1,2);
 
-        cv2.imshow('preview', frame)
-        key = cv2.waitKey(5)
+        # cv2.imshow('preview', frame)
+        # key = cv2.waitKey(5)
 
         matrix = tictactoeMeans(matrix,4,10)
 
-        for i in range(matrix.shape[0]):
-            center = (int(matrix[i,0]),int(matrix[i,1]))
-            cv2.circle(frame,center,10,(255,0,255))
-        cv2.imshow('preview', frame)
-        key = cv2.waitKey(5)
+        # for i in range(matrix.shape[0]):
+            # center = (int(matrix[i,0]),int(matrix[i,1]))
+            # cv2.circle(frame,center,10,(255,0,255))
+        # cv2.imshow('preview', frame)
+        # key = cv2.waitKey(5)
 
         return matrix, midpoints
     
@@ -92,8 +92,7 @@ class getTemplate:
         
         ## Display what was captured for 2 seconds
         cv2.imshow('preview', frame)
-        key = cv2.waitKey(5)
-        time.sleep(2)  
+        key = cv2.waitKey(5) 
         return centroids, midpoints, frame
         
        
