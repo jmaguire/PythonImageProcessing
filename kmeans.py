@@ -78,7 +78,7 @@ def tictactoeMeans(data,k,maxIter):
             centroid = np.mean(data[categories == n, :],0);
             centroids[n,:] = centroid
         if np.array_equal(centroids,oldCentroids): break
-    return centroids
+    return np.float32(centroids)
 
 a = np.zeros((4,2))
 a[0,:] = [1,2.5] 

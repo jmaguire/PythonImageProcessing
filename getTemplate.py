@@ -18,10 +18,10 @@ class getTemplate:
             b = np.sin(theta)
             x0 = a*rho
             y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))
+            x1 = int(x0 + 10000*(-b))
+            y1 = int(y0 + 10000*(a))
+            x2 = int(x0 - 10000*(-b))
+            y2 = int(y0 - 10000*(a))
             
             #print (x1,y1),(x2,y2)
             midpointX = int((x2+x1)/2.0)
@@ -41,14 +41,13 @@ class getTemplate:
         key = cv2.waitKey(5)
 
         matrix = tictactoeMeans(matrix,4,10)
-        print 'hree'
-        print matrix
+
         for i in range(matrix.shape[0]):
             center = (int(matrix[i,0]),int(matrix[i,1]))
             cv2.circle(frame,center,10,(255,0,255))
         cv2.imshow('preview', frame)
         key = cv2.waitKey(5)
-        a = raw_input('enter')
+
         return matrix, midpoints
     
     ##Return 4 centroids, Midpoints, Image
@@ -85,8 +84,9 @@ class getTemplate:
         
       
         centroids, midpoints = self.getMidpoints(frame)
-        
         cv2.imshow('preview', frame)
+        key = cv2.waitKey(5)
+        time.sleep(2)  
         return centroids, midpoints, frame
         
        
