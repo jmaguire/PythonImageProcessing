@@ -263,7 +263,6 @@ while True:
 
         for quadrant, piece in enumerate(pieces):
             if piece == 'O':
-                print 'here'
                 circleQuad = circleAtQuadrant(circle, quadrant, boardX,boardY,w,h);
                 ## NOTE we have to pack 2D arrays in another array for perpecticeTransform 
                 ## to work
