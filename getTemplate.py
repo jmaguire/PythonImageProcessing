@@ -7,6 +7,10 @@ from kmeans import tictactoeMeans
 class getTemplate:
     FREQ = 300
     DURATION = 250
+    
+    ## Extract HoughLines and Find their midpoints
+    ## Also uses a modified kmeans, tictactoeMeans
+    ## To extract the 4 midpoints for the 4 lines
     def getMidpoints(self, frame):
         h,w,d = frame.shape
         gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
@@ -52,6 +56,7 @@ class getTemplate:
     
     ##Return 4 centroids, Midpoints, Image
     def getImage(self, duration):
+    
         ## Open Capture Device
         vc = cv2.VideoCapture(0)
         if vc.isOpened(): # try to get the first frame
@@ -82,8 +87,10 @@ class getTemplate:
         key = cv2.waitKey(5)
         winsound.Beep(getTemplate.FREQ,getTemplate.DURATION)
         
-      
+        ## Get Midpoints, centroids
         centroids, midpoints = self.getMidpoints(frame)
+        
+        ## Display what was captured for 2 seconds
         cv2.imshow('preview', frame)
         key = cv2.waitKey(5)
         time.sleep(2)  
