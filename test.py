@@ -239,15 +239,17 @@ while True:
         dst = cv2.perspectiveTransform(pts,H)
         color = [255,0,0]
         newBoard = np.int32(cv2.perspectiveTransform(board,H));
-        if oldBoard != None:
-            norm = np.sum(np.apply_along_axis(np.linalg.norm,2,newBoard - oldBoard)) 
+        if H_old != None:
+            #norm = np.sum(np.apply_along_axis(np.linalg.norm,2,newBoard - oldBoard)) 
+            norm = np.linalg.norm(H- H_old, 2)
+
         
         if oldNorm != None:
             ## collect samples of difference in norms
             if counter <= avergingPeriod:
                 avgDeltNorm[counter % len(avgDeltNorm)] = norm-oldNorm
             else:
-                if abs(norm-oldNorm) > np.mean(avgDeltNorm) + .5*np.std(avgDeltNorm):
+                if abs(norm-oldNorm) > np.mean(avgDeltNorm) + 1.5*np.std(avgDeltNorm):
                     blocked = True
                 else:
                     blocked = False
@@ -258,6 +260,7 @@ while True:
             H = H_old;
             ## redraw
             newBoard = np.int32(cv2.perspectiveTransform(board,H));
+            dst = cv2.perspectiveTransform(pts,H)
             
         ## Draw 
         ## Draw tictactoe board
@@ -282,7 +285,6 @@ while True:
             # center = (int(keypoints[m.trainIdx].pt[0]),int(keypoints[m.trainIdx].pt[1]))
             # cv2.circle(frame,center,10,(255,0,0))
         img2 = cv2.polylines(frame,[np.int32(dst)],True,255,3)
-    
     oldBoard = newBoard
     oldNorm = norm
     H_old = H
