@@ -131,11 +131,11 @@ def circleAtQuadrant(circle, quadrant,xlims,ylims,w,h):
 ##--------------------------------------------------------------
 
 ## Initialize Surf Detector
-detector = cv2.SURF()
+detector = cv2.SURF(1000)
 
 ## Get target and extract keypoints/descriptors
 o = gt.getTemplate()
-centroidsTarget, midpointsTarget, frame = o.getImage(1)     
+centroidsTarget, midpointsTarget, frame = o.getImage(3)     
 image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 keypoints,descriptors = detector.detectAndCompute(image,None)   
 target = CapturedImage(image, descriptors,keypoints)
@@ -171,13 +171,14 @@ else:
 # ymin = min(centroidsTarget[:,1])
 # ymax = max(centroidsTarget[:,1])
 
-# h,w,d = frame.shape
+
 
 ## Doesn't really work because it needs to board to be just tic tac toe,
 ## However this doesn't give us enough features
 # board = np.float32([ [xmin,h*1/8],[xmin,h*7/8],[xmax,h*7/8],[xmax,h*1/8],\
         # [w*1/8,ymin],[w*7/8,ymin],[w*1/8,ymax],[w*7/8,ymax]]).reshape(-1,1,2)   
 
+h,w,d = frame.shape
 boardX = [w*3/8,w*5/8]
 boardY = [h*3/8,h*5/8]
 board = np.float32([ [boardX[0],h*1/8],[boardX[0],h*7/8],[boardX[1],h*7/8],[boardX[1],h*1/8],\
@@ -190,7 +191,7 @@ pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 H = None
 
 ## Statistics to measure blockage
-norm, oldNorm, oldBoard = None, None, None;
+norm, oldNorm, oldBoard, H_old = None, None, None, None;
 avergingPeriod = 50
 avgDeltNorm = np.array([-1]*avergingPeriod);
 blocked = False
@@ -237,30 +238,30 @@ while True:
     if H is not None: 
         dst = cv2.perspectiveTransform(pts,H)
         color = [255,0,0]
-        ## Draw tictactoe board
         newBoard = np.int32(cv2.perspectiveTransform(board,H));
+        if oldBoard != None:
+            norm = np.sum(np.apply_along_axis(np.linalg.norm,2,newBoard - oldBoard)) 
         
-        # if oldBoard != None:
-            # norm = np.sum(np.apply_along_axis(np.linalg.norm,2,newBoard - oldBoard)) 
+        if oldNorm != None:
+            ## collect samples of difference in norms
+            if counter <= avergingPeriod:
+                avgDeltNorm[counter % len(avgDeltNorm)] = norm-oldNorm
+            else:
+                if abs(norm-oldNorm) > np.mean(avgDeltNorm) + .5*np.std(avgDeltNorm):
+                    blocked = True
+                else:
+                    blocked = False
         
-        # if oldNorm != None:
-            # ## collect samples of difference in norms
-            # if counter <= avergingPeriod:
-                # avgDeltNorm[counter % len(avgDeltNorm)] = norm-oldNorm
-            # else:
-                # if abs(norm-oldNorm) > np.mean(avgDeltNorm) + .5*np.std(avgDeltNorm):
-                    # print 'yikes',counter
-                    # blocked = True
-                # else:
-                    # blocked = False
-        
-        # if blocked:
-            # print 'here'
-            # color = [0,255,0]
-            # newBoard = oldBoard
+        if blocked:
+            color = [0,255,0]
+            ##newBoard = oldBoard
+            H = H_old;
+            ## redraw
+            newBoard = np.int32(cv2.perspectiveTransform(board,H));
             
-        ## Draw Pieces
-
+        ## Draw 
+        ## Draw tictactoe board
+        
         for quadrant, piece in enumerate(pieces):
             if piece == 'O':
                 circleQuad = circleAtQuadrant(circle, quadrant, boardX,boardY,w,h);
@@ -284,7 +285,7 @@ while True:
     
     oldBoard = newBoard
     oldNorm = norm
-
+    H_old = H
     cv2.imshow('preview', frame)
     rval, frame = vc.read()
     counter += 1

@@ -63,7 +63,6 @@ class getTemplate:
             rval, frame = vc.read()
         else:
             rval = False 
-        print rval
         rval, frame = vc.read()
         
         ## Create Board template
