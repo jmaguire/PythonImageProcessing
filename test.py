@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import getTemplate as gt
-
+import time
 ## Image/Dectector Class
 class CapturedImage:
     def __init__(self,image,descriptors,keypoints):

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import winsound
 import time
-from kmeans import kmeans
+from kmeans import tictactoeMeans
 
 class getTemplate:
     FREQ = 300
@@ -33,16 +33,22 @@ class getTemplate:
                 midpointY = int(h/2)
             midpoint = (midpointX,midpointY)
             midpoints.append(midpoint)
-            
+            cv2.circle(frame,midpoint,10,(255,0,0))
         matrix = np.array(midpoints)
         midpoints = np.int32(midpoints).reshape(-1,1,2);
-        matrix = kmeans(matrix, 4, 10)
-        for i in range(matrix.shape[0]):
-            center = (int(matrix[i,0]),int(matrix[i,1]))
-            cv2.circle(frame,center,10,(255,0,0))
+
         cv2.imshow('preview', frame)
         key = cv2.waitKey(5)
-        time.sleep(3)  
+
+        matrix = tictactoeMeans(matrix,4,10)
+        print 'hree'
+        print matrix
+        for i in range(matrix.shape[0]):
+            center = (int(matrix[i,0]),int(matrix[i,1]))
+            cv2.circle(frame,center,10,(255,0,255))
+        cv2.imshow('preview', frame)
+        key = cv2.waitKey(5)
+        a = raw_input('enter')
         return matrix, midpoints
     
     ##Return 4 centroids, Midpoints, Image
