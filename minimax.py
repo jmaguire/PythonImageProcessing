@@ -82,13 +82,22 @@ class MinimaxAgent:
         return value
     
     
+    ## check suicide
+    # clone = gameState.copy()
+    # clone.role = clone.getOtherRole()
+    # for action in gameState.getLegalActions():
+        # nextState = gameState.generateSuccessor(action)
+        # if nextState.isLose(): ##isWin = does computer Win
+            # print 'blocking at',action
+            # return action
+        
+    
     
 
 
     self.depth = 5
     self.cache = {}
     actionScore = float("-inf")
-    actions = gameState.getLegalActions()
     value = float("-inf")
     alpha , beta = float("-inf") , float("inf")
     for action in gameState.getLegalActions():        
@@ -104,5 +113,5 @@ class MinimaxAgent:
         if value > actionScore:
             actionScore = value
             bestAction = action
-    print actionScore
+    # print actionScore
     return bestAction

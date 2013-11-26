@@ -19,6 +19,10 @@ class TicTacToeState:
     ## action is a i,j location
     ## we only need to check row,col and diag that the action is in
     
+    def copy(self):
+        board = list([list(self.board[0]),list(self.board[1]),list(self.board[2])])
+        return TicTacToeState(board,self.role)
+        
     ## this is because we can only win on a action besides the last action (always a draw)
     def isGoalAndScore(self):
         def checkEqual(list):
@@ -30,7 +34,7 @@ class TicTacToeState:
         
         ##check row
         for i in range(3):
-            row = tuple(self.board[0])
+            row = tuple(self.board[i])
             if checkEqual(row): return (True,100) 
         ##check column
         for i in range(3):
@@ -58,7 +62,7 @@ class TicTacToeState:
         
         ##check row
         for i in range(3):
-            row = tuple(self.board[0])
+            row = tuple(self.board[i])
             if checkEqual(row): return True
         ##check column
         for i in range(3):
@@ -82,7 +86,7 @@ class TicTacToeState:
         
         ##check row
         for i in range(3):
-            row = tuple(self.board[0])
+            row = tuple(self.board[i])
             if checkEqual(row): return True
         ##check column
         for i in range(3):

@@ -11,6 +11,16 @@ def printBoard(board):
     print board[2][0],board[2][1],board[2][2]
     print
 
+    
+board = [['o','o','x'],[None,'o','o'],['x','x','x'] ]    
+test = TicTacToeState(board,'x')
+printBoard(test.board)
+print test.isGoal()
+    
+    
+    
+    
+    
 gameState = TicTacToeState()
 while(gameState.isGoal() is False):
     print gameState.role
