@@ -103,7 +103,7 @@ class MinimaxAgent:
     
 
 
-    self.depth = 5
+    self.depth = 6 ## max depth of tictactoe should be 5
     # self.cache = {}
     actionScore = float("-inf")
     value = float("-inf")

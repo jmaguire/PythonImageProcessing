@@ -17,10 +17,7 @@ test = TicTacToeState(board,'x')
 printBoard(test.board)
 print test.isGoal()
     
-    
-    
-    
-    
+
 gameState = TicTacToeState()
 while(gameState.isGoal() is False):
     printBoard(gameState.board)
