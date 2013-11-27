@@ -23,7 +23,6 @@ print test.isGoal()
     
 gameState = TicTacToeState()
 while(gameState.isGoal() is False):
-    print gameState.role
     printBoard(gameState.board)
     if gameState.role == 'x':
         move = raw_input('Enter Move x,y:')
@@ -35,5 +34,13 @@ while(gameState.isGoal() is False):
     print 'action chosen', action
     gameState = gameState.generateSuccessor(action)
 print 'Game Over'
+
+if gameState.isWin():
+    if gameState.role == 'o': ## gameState switches after move
+        print 'VICTORY'
+    else:
+        print 'LOST!'
+else:
+    print 'DRAW!'
 printBoard(gameState.board)
 

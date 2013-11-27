@@ -5,7 +5,9 @@ class MinimaxAgent:
   """
     Your minimax agent (problem 1)
   """
-  
+  def __init__(self):
+    self.cache = {}
+    
   def getAction(self, gameState):
     """
       Returns the minimax action from the current gameState using self.depth
@@ -51,6 +53,8 @@ class MinimaxAgent:
     
     ## Computer Move
     def maxScore(state,alpha,beta,depth):
+        if (state.toHash(),alpha,beta) in self.cache:
+            return self.cache[(state.toHash(),alpha,beta)]
         if state.isGoal(): 
             return state.getScore() ## computer score
         if depth == 0:
@@ -64,10 +68,13 @@ class MinimaxAgent:
             value = max(value,minScore(nextState,alpha,beta,depth - 1))
             if value >= beta: return value 
             alpha  = max(value,alpha)
+        self.cache[(state.toHash(),alpha,beta)] = value
         return value
 
     ## Opponent Move
     def minScore(state,alpha,beta,depth):
+        if (state.toHash(),alpha,beta) in self.cache:
+            return self.cache[(state.toHash(),alpha,beta)]
         if state.isGoal():
             return state.getScore()     
             
@@ -79,6 +86,7 @@ class MinimaxAgent:
             value = min(value,maxScore(nextState,alpha,beta,depth))
             if value <= alpha: return value
             beta = min(value,beta)
+        self.cache[(state.toHash(),alpha,beta)] = value
         return value
     
     
@@ -96,7 +104,7 @@ class MinimaxAgent:
 
 
     self.depth = 5
-    self.cache = {}
+    # self.cache = {}
     actionScore = float("-inf")
     value = float("-inf")
     alpha , beta = float("-inf") , float("inf")

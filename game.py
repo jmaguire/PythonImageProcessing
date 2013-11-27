@@ -7,6 +7,10 @@
 class TicTacToeState:
     roles = ['x','o']
     
+    def toHash(self):
+        board = (tuple(self.board[0]),tuple(self.board[1]),tuple(self.board[2]))
+        return (board, self.role)
+        
     def __init__(self, board = None, role = None):
 
         if board == None or role == None:
