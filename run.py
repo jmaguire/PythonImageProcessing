@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import getTemplate as gt
 import time
-from kmeans import tictactoeMeans
+from game import TicTacToeState
+from minimax import MinimaxAgent
 
 PAD = 15
 ## Image/Dectector Class
@@ -30,8 +31,6 @@ def getCircle(radius,width):
             circle.append([x,y])
     return np.array(circle);
 
-
-    
 ## Get Matches. Return empty array if no descriptors are found
 def getMatches(captured, target):
     ##initialize good matches
@@ -57,68 +56,69 @@ def getMatches(captured, target):
         if m.distance < 0.7*n.distance:
             goodMatches.append(m)
     return goodMatches
-
-def extractQuadrant(frame,quadrant):
+    
+def extractQuadrant(frame,quadrant,xlims,ylims,w,h):
     lowerRight = None
-    if quadrant == 1:
-        lowerRight = np.array([xmin,ymin])-PAD
+    if quadrant == 0:
+        lowerRight = np.array([xlims[0],ylims[0]])-PAD
         upperLeft = np.array([w*1/8,h*1/8])
+    elif quadrant == 1:
+        lowerRight = np.array([xlims[1],ylims[0]])-PAD
+        upperLeft = np.array([xlims[0]+PAD,h*1/8])
     elif quadrant == 2:
-        lowerRight = np.array([xmax,ymin])-PAD
-        upperLeft = np.array([xmin+PAD,h*1/8])
+        lowerRight = np.array([w*7/8,ylims[0]-PAD])
+        upperLeft = np.array([xlims[1]+PAD,h*1/8])
     elif quadrant == 3:
-        lowerRight = np.array([w*7/8,ymin])
-        upperLeft = np.array([xmax+PAD,h*1/8])
+        lowerRight = np.array([xlims[0],ylims[1]])-PAD
+        upperLeft = np.array([w*1/8,ylims[0]+PAD])
     elif quadrant == 4:
-        lowerRight = np.array([xmin,ymax])-PAD
-        upperLeft = np.array([w*1/8,ymin+PAD])
-    elif quadrant == 5:
-        lowerRight = np.array([xmax,ymax])- PAD
-        upperLeft = np.array([xmin,ymin]) + PAD
+        lowerRight = np.array([xlims[1],ylims[1]])- PAD
+        upperLeft = np.array([xlims[0],ylims[0]]) + PAD
+    elif quadrant == 5:    
+        lowerRight = np.array([w*7/8,ylims[1] - PAD])
+        upperLeft = np.array([xlims[1],ylims[0]]) + PAD
     elif quadrant == 6:    
-        lowerRight = np.array([w*7/8,ymax - PAD])
-        upperLeft = np.array([xmax,ymin]) + PAD
+        lowerRight = np.array([xlims[0]-PAD,h*7/8])
+        upperLeft = np.array([w*1/8,ylims[1] + PAD])
     elif quadrant == 7:    
-        lowerRight = np.array([xmin-PAD,h*7/8])
-        upperLeft = np.array([w*1/8,ymax]) + PAD
-    elif quadrant == 8:    
-        lowerRight = np.array([xmax-PAD,h*7/8])
-        upperLeft = np.array([xmin,ymax]) + PAD
-    elif quadrant == 9:
+        lowerRight = np.array([xlims[1]-PAD,h*7/8])
+        upperLeft = np.array([xlims[0],ylims[1]]) + PAD
+    elif quadrant == 8:
         lowerRight = np.array([w*7/8,h*7/8])
-        upperLeft = np.array([xmax,ymax]) + PAD
-    return frame[upperLeft[0]:lowerRight[0],upperLeft[1]:lowerRight[1]]
+        upperLeft = np.array([xlims[1],ylims[1]]) + PAD
+
+    return frame[upperLeft[1]:lowerRight[1],upperLeft[0]:lowerRight[0]], upperLeft, lowerRight
 
 def circleAtQuadrant(circle, quadrant,xlims,ylims,w,h):
     
     ##ALWAYS USE NP.COPY IF YOU USE THIS TO CALC A NEW CIRCLE
     newCircle = np.copy(circle)
     x ,y  = 0 , 0
-    if quadrant == 1:
+    if quadrant == 0:
         x = xlims[0]/2 + PAD 
+        y = ylims[0]/2
+    if quadrant == 1:
+        x = (xlims[0]+xlims[1])/2
         y = ylims[0]/2
     if quadrant == 2:
-        x = (xlims[0]+xlims[1])/2
+        x = (w + xlims[1])/2 - PAD 
         y = ylims[0]/2
     if quadrant == 3:
-        x = (w + xlims[1])/2 - PAD 
-        y = ylims[0]/2
-    if quadrant == 4:
         x = xlims[0]/2 + PAD  
         y = (ylims[0]+ylims[1])/2
-    if quadrant == 5:
+    if quadrant == 4:
         x = (xlims[0]+xlims[1])/2
         y = (ylims[0]+ylims[1])/2
-    if quadrant == 6:
+    if quadrant == 5:
         x = (w + xlims[1])/2 - PAD 
         y = (ylims[0]+ylims[1])/2
-    if quadrant == 7:
+    if quadrant == 6:
         x = xlims[0]/2 + PAD 
         y = (ylims[1] + h)/2
-    if quadrant == 8:
+    if quadrant == 7:
         x = (xlims[0]+xlims[1])/2
         y = (ylims[1] + h)/2
-    if quadrant == 9:
+    if quadrant == 8:
         x = (w + xlims[1])/2 - PAD 
         y = (ylims[1] + h)/2
     newCircle[:,0] = circle[:,0] + x
@@ -126,16 +126,47 @@ def circleAtQuadrant(circle, quadrant,xlims,ylims,w,h):
     return newCircle
 
 
+def getNewPieces(pieces, playerMove):
+    
+    ## Get XY posistion of move. TicTacToeState uses (x,y) coordinates
+    def getXY(index):
+        if index == 0: return [0,0]
+        if index == 1: return [0,1]
+        if index == 2: return [0,2]
+        if index == 3: return [1,0]
+        if index == 4: return [1,1]
+        if index == 5: return [1,2]
+        if index == 6: return [2,0]
+        if index == 7: return [2,1]
+        if index == 8: return [2,2]
+    ## Build Board
+    board = [[None]*3 for j in range(3)]
+    for i, piece in enumerate(pieces):
+        row, col = getXY(i)
+        board[row][col] = piece
+        
+    ## Player Move
+    action = getXY(playerMove)
+    gameState = TicTacToeState(board,'x')
+    gameState = gameState.generateSuccessor(action)
+    if None in pieces:
+        ## Computer Move
+        player = MinimaxAgent()
+        action = player.getAction(gameState)
+        if action != None:
+            gameState = gameState.generateSuccessor(action)
+    return gameState.board[0] + gameState.board[1] + gameState.board[2]
+    
 ## Initialize detectors  
 ##--------------------------------------------------------------
 ##--------------------------------------------------------------
 
 ## Initialize Surf Detector
-detector = cv2.SURF(1000)
+detector = cv2.SURF(85)
 
 ## Get target and extract keypoints/descriptors
 o = gt.getTemplate()
-centroidsTarget, midpointsTarget, frame = o.getImage(3)     
+frame = o.getImage(10)     
 image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 keypoints,descriptors = detector.detectAndCompute(image,None)   
 target = CapturedImage(image, descriptors,keypoints)
@@ -161,23 +192,6 @@ else:
 ##--------------------------------------------------------------
 ##--------------------------------------------------------------
 
-# h,w = target.getImage().shape
-
-
-# print h,w
-
-# xmin = min(centroidsTarget[:,0])
-# xmax = max(centroidsTarget[:,0])
-# ymin = min(centroidsTarget[:,1])
-# ymax = max(centroidsTarget[:,1])
-
-
-
-## Doesn't really work because it needs to board to be just tic tac toe,
-## However this doesn't give us enough features
-# board = np.float32([ [xmin,h*1/8],[xmin,h*7/8],[xmax,h*7/8],[xmax,h*1/8],\
-        # [w*1/8,ymin],[w*7/8,ymin],[w*1/8,ymax],[w*7/8,ymax]]).reshape(-1,1,2)   
-
 h,w,d = frame.shape
 boardX = [w*3/8,w*5/8]
 boardY = [h*3/8,h*5/8]
@@ -186,6 +200,10 @@ board = np.float32([ [boardX[0],h*1/8],[boardX[0],h*7/8],[boardX[1],h*7/8],[boar
 
 ## Outline of original image
 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+
+## X-template to use for matching
+X_template = cv2.imread('X_rots.jpg',0)
+X_w, X_h = X_template.shape[::-1]
 
 ## Homography
 H = None
@@ -206,11 +224,12 @@ circle = getCircle(radius, 5)
 ## Pieces
 pieces = [None]*9
 
-## Add two Circles
-pieces[1] = 'O'
-pieces[5] = 'O'
+# filter array
+xcounts = [0]*9
 ##--------------------------------------------------------------
 ##--------------------------------------------------------------
+
+cv2.namedWindow("Rectified")
 
 while True:
     ## Get Matches
@@ -228,11 +247,44 @@ while True:
         dst_pts = np.float32([ captured.getKeypoints()[m.trainIdx].pt for m in matches ]).reshape(-1,1,2)
         H, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,6.0)
 
+        successInv, invH = cv2.invert(H)
+        imRect = cv2.warpPerspective(im, invH, (w,h))
+
         matchesMask = mask.ravel().tolist()
         
-        ## Check for X's
-        
-        ## update board
+        xPieces = [None]*9
+        if None in pieces:
+            ## Check for X's
+            for quadrant in xrange(0,9):
+
+                quadrantImage, upperLeft, lowerRight = extractQuadrant(imRect, quadrant, boardX, boardY, w, h)
+                # cv2.rectangle(frame,(top_left[0], top_left[1]), (bottom_right[0], bottom_right[1]), 100, 2)
+                res = cv2.matchTemplate(quadrantImage,X_template,cv2.TM_CCOEFF_NORMED)
+                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res) # this currently searches whole image.  can use mask for each box
+
+                # print "maxval = ", max_locval
+                
+                if max_val >= 0.4: # 0.4 detemined empirically based on my board
+                    # print "Found an X in quadrant ", quadrant, "value = ", max_val, "loc ", max_loc
+                    top_left = max_loc + upperLeft
+                    top_left = (top_left[0], top_left[1])
+                    bottom_right = (top_left[0] + X_w, top_left[1] + X_h)
+                    
+                    cv2.rectangle(imRect,top_left, bottom_right, 100, 2) # specific box
+                    cv2.rectangle(imRect,(upperLeft[0], upperLeft[1]), (lowerRight[0], lowerRight[1]), 200, 2) #quadrant box
+                
+                    xPieces[quadrant] = 'x'
+
+            
+            # update board
+            for quadrant in xrange(0,9):
+                if (pieces[quadrant] != 'x'):
+                    if (xPieces[quadrant] == 'x'):
+                        xcounts[quadrant] += 1
+                        if xcounts[quadrant] == 3:
+                            pieces = getNewPieces(pieces, quadrant)
+                    else:
+                        xcounts[quadrant] = 0
 
     ## draw board. 
     if H is not None: 
@@ -266,7 +318,7 @@ while True:
         ## Draw tictactoe board
         
         for quadrant, piece in enumerate(pieces):
-            if piece == 'O':
+            if piece == 'o':
                 circleQuad = circleAtQuadrant(circle, quadrant, boardX,boardY,w,h);
                 ## NOTE we have to pack 2D arrays in another array for perpecticeTransform 
                 ## to work
@@ -285,9 +337,12 @@ while True:
             # center = (int(keypoints[m.trainIdx].pt[0]),int(keypoints[m.trainIdx].pt[1]))
             # cv2.circle(frame,center,10,(255,0,0))
         img2 = cv2.polylines(frame,[np.int32(dst)],True,255,3)
-    oldBoard = newBoard
-    oldNorm = norm
-    H_old = H
+        oldBoard = newBoard
+        oldNorm = norm
+        H_old = H
+
+        cv2.imshow('Rectified', imRect)
+        
     cv2.imshow('preview', frame)
     rval, frame = vc.read()
     counter += 1
@@ -295,5 +350,6 @@ while True:
         break
 
 cv2.destroyWindow("preview")
+cv2.destroyWindow("Rectified")
 
 

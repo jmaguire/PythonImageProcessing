@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-import winsound
+# import winsound
 import time
-from kmeans import tictactoeMeans
+
 
 class getTemplate:
     FREQ = 300
     DURATION = 250
-    
+    '''
     ## Extract HoughLines and Find their midpoints
     ## Also uses a modified kmeans, tictactoeMeans
     ## To extract the 4 midpoints for the 4 lines
@@ -41,8 +41,7 @@ class getTemplate:
         matrix = np.array(midpoints)
         midpoints = np.int32(midpoints).reshape(-1,1,2);
 
-        # cv2.imshow('preview', frame)
-        # key = cv2.waitKey(5)
+
 
         matrix = tictactoeMeans(matrix,4,10)
 
@@ -53,7 +52,7 @@ class getTemplate:
         # key = cv2.waitKey(5)
 
         return matrix, midpoints
-    
+        '''
     ##Return 4 centroids, Midpoints, Image
     def getImage(self, duration):
     
@@ -84,15 +83,17 @@ class getTemplate:
             key = cv2.waitKey(5)
         rval, frame = vc.read()
         key = cv2.waitKey(5)
-        winsound.Beep(getTemplate.FREQ,getTemplate.DURATION)
+        # winsound.Beep(getTemplate.FREQ,getTemplate.DURATION)
         
-        ## Get Midpoints, centroids
+        '''
+        ## Get Midpoints, centroids
         centroids, midpoints = self.getMidpoints(frame)
+        '''
         
         ## Display what was captured for 2 seconds
         cv2.imshow('preview', frame)
         key = cv2.waitKey(5) 
-        return centroids, midpoints, frame
+        return frame
         
        
 

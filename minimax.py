@@ -100,7 +100,8 @@ class MinimaxAgent:
             # return action
         
     
-    
+    if not gameState.getLegalActions():
+        return None
 
 
     self.depth = 6 ## max depth of tictactoe should be 5
@@ -108,6 +109,7 @@ class MinimaxAgent:
     actionScore = float("-inf")
     value = float("-inf")
     alpha , beta = float("-inf") , float("inf")
+    bestAction = random.choice(gameState.getLegalActions());
     for action in gameState.getLegalActions():        
         nextState = gameState.generateSuccessor(action)
         if nextState.isWin(): ##isWin = does computer Win
